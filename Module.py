@@ -12,11 +12,18 @@ class Module:
     Triggers = []
     Actions = []
 
-    def __init__(self, mode):
+    def __init__(self, name, mode):
+        self.name = name
         self.mode = mode
 
-    def addTrigger(trigger):
-        Triggers.append(trigger)
+    def addTrigger(self, trigger):
+        self.Triggers.append(trigger)
 
-    def addAction(action):
-        Actions.append(action)
+    def addAction(self, action):
+        self.Actions.append(action)
+
+    def getName(self):
+        return self.name
+    
+    def getMode(self):
+        return self.mode
