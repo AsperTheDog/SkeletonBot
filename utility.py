@@ -9,7 +9,7 @@ def SplitCommand(command):
         sp.remove(' ')
     return sp
 
-def GetModType(str):
+def getModType(str):
     if str == "m" or str == "message" or str == "0":
         return "message"
     if str == "s" or str == "schedule" or str == "1":

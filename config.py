@@ -1,7 +1,10 @@
 from discord.ext import commands
 
-modules = []
-activeModules = []
-openModule = 0
+messageMod = ""
+scheduleMod = ""
+joinMod = ""
+openModule = []
+backup = 0
+mainteinance = 0
 client = commands.Bot(command_prefix = '.', case_insensitive = False)
-token = "NjgyNzQ0MTE2MTQzOTgwNjk5.Xlhd4g.TLDu6stzHPWY-r1-ATeOUR8NwaA"
+token = "NjgyNzQ0MTE2MTQzOTgwNjk5.XuYA-g.unTvrKIup678agn1lAaNhJ4bFSE"

@@ -14,5 +14,5 @@ async def crTrigger(ctx, *args):
     name = argl.pop(0)
     mode = argl.pop(0)
     n = Trigger.Trigger(name, mode, argl)
-    config.openModule.addTrigger(n)
+    config.openModule[-1].addTrigger(n)
     await ctx.channel.send(embed=utility.getEmbed("Created Trigger"))

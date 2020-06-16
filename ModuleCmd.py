@@ -4,37 +4,24 @@ from os import listdir
 import utility
 import Module
 import discord
+import pickle
 
-def ActivateModule(moduleName):
-    if(moduleName in config.activeModules):
-        return utility.getEmbed("Already activated")
-    for x in config.modules:
-        if moduleName == x.getName():
-            config.activeModules.append(moduleName)
-            RefreshModules(config.activeModules)
-            return utility.getEmbed("Activated Module")
-
-    return utility.getEmbed("Error, that module doesn't exist")
-
-def DeactivateModule(moduleName):
-    if(moduleName not in config.activeModules):
-        return utility.getEmbed("Not activated")
-    for x in config.modules:
-        if moduleName == x.getName():
-            config.activeModules.remove(moduleName)
-            RefreshModules(config.activeModules)
-            return utility.getEmbed("Dectivated Module")
-
-    return utility.getEmbed("Error, that module doesn't exist")
-    RefreshModules(config.activeModules)
-
+def getModules(type):
+    if type == utility.getModType("0"):
+        return config.messageMod.actions
+    elif type == utility.getModType("1"):
+        return config.scheduleMod.actions
+    elif type == utility.getModType("2"):
+        return config.joinMod.actions
+    else:
+        return config.joinMod.actions + config.scheduleMod.actions + config.messageMod.actions
 
 def PrintModules(list):
     embed = discord.Embed(title="Modules", color=0x00ff00)
     i = 1
     string = ""
     for x in list:
-        string +="**" + str(i) + ":** " + x.getName() + " - (" + utility.GetModType(x.getMode()) + ")\n"
+        string +="**" + str(i) + ":** " + x.getName() + " - (" + utility.getModType(x.getMode()) + ")\n"
         i += 1
     if (len(list) == 0):
         string = "There are no defined modules"
@@ -45,135 +32,204 @@ def PrintActiveModules():
     embed = discord.Embed(title="Active Modules", color=0x00ff00)
     i = 1
     string = ""
-    for x in config.activeModules:
-        string +="**" + str(i) + ":** " + x + "\n"
-        i += 1
+    for x in getModules(-1):
+        if x.active == 1:
+            string += "**" + str(i) + ":** " + x.getName() + " - (" + utility.getModType(x.getMode()) + ")\n"
+            i += 1
+    if (string == ""):
+        string = "There are no active modules"
     embed.add_field(name="-------------------", value=string, inline = True)
     return embed
 
-def LoadActiveModules():
-    AM = []
-    f = open("ModList.txt","r")
-    lines = f.readlines()
-    for x in lines:
-        s = utility.SplitCommand(x)
-        AM.append(s[0])
-    f.close()
-    return AM
+def createMod(name, mode):
+    return Module.Module(name, mode)
 
-def LoadModules():
-    i = 0
-    Modules = []    
-    for x in listdir("Modules"):
-        f = open("Modules\\" + x, "r")
-        lines = f.readlines()
-        for x in lines:
-            if(x == ""): i+=1
-            if(i==0):
-                c = utility.SplitCommand(x)
-                Modules.append(Module.Module(c[0],c[1]))
-            #if(i==1):
-                #check type
-                #append triggers to module.
-        f.close()
-    return Modules
+def updateData(mode):
+    if utility.getModType(mode) == utility.getModType("0"):
+        with open("msgModuleDat.p", "wb") as f:
+            pickle.dump(config.messageMod, f)
+    elif utility.getModType(mode) == utility.getModType("1"):
+        with open("schModuleDat.p", "wb") as f:
+            pickle.dump(config.scheduleMod, f)
+    elif utility.getModType(mode) == utility.getModType("2"):
+        with open("joinModuleDat.p", "wb") as f:
+            pickle.dump(config.joinMod, f)
 
-def RefreshModules(list):
-    f = open("ModList.txt","w")
+def filterActions(list):
+    aux = []
     for x in list:
-        f.write(x + '"\n')
-    f.close()
+        if isinstance(x, Module.Module):
+            aux.append(x)
+    return aux
 
 #-------------------#
 #  Module Commands  #
 #-------------------#
 
 @config.client.command()
-async def ModuleActivate(ctx, name):
-    await ctx.channel.send(embed=ActivateModule(name))
-
-@config.client.command()
-async def ModuleDeactivate(ctx, name):
-    await ctx.channel.send(embed=DeactivateModule(name))
-
+async def setActiveModule(ctx, set):
+    if set == "enable":
+        activity = 1
+    else:
+        activity = 0
+    opm = config.openModule.pop()
+    opm.active = activity
+    config.openModule.append(opm)
+    response = utility.getEmbed("The module **" + opm.name + "** is now " + set + "d")
+    await ctx.send(embed=response)
+    
 @config.client.command()
 async def crMod(ctx, name, type):
-    dirs = os.listdir("Modules")
-    if utility.GetModType(type) == "noType":
+    if len(config.openModule) != 0:
+        type = config.openModule[-1].mode
+    else:
+        father = 0
+    if utility.getModType(type) == "noType":
         response = utility.getEmbed("**Error creating the module:** Invalid type")
         await ctx.send(embed=response)
         return
-    if name in dirs:
-        response = utility.getEmbed("**Error creating the module:** There is already a module with that name")
-        await ctx.send(embed=response)
-        return
-    f = open("Modules\\" + name, "w")    
-    f.write(name + '"' + utility.GetModType(type) + '"\n')
-    f.close()
-    config.modules.append(Module.Module(name, utility.GetModType(type)))
-    response = utility.getEmbed("Created module **' " + name + "'** with type **" + utility.GetModType(type) + "**")
+    for x in getModules(-1):
+        if x.name == name:
+            response = utility.getEmbed("**Error creating the module:** There is already a module with that name")
+            await ctx.send(embed=response)
+            return
+    config.openModule.append(Module.Module(name, utility.getModType(type)))
+    response = utility.getEmbed("Created module **' " + name + "'** with type **" + utility.getModType(type) + "**")
     await ctx.send(embed=response)
 
 @config.client.command()
 async def ListModules(ctx):
-    await ctx.channel.send(embed=PrintModules(config.modules))
+    await ctx.channel.send(embed=PrintModules(getModules(-1)))
 
 @config.client.command()
 async def ListActiveModules(ctx):
     await ctx.channel.send(embed=PrintActiveModules())
 
 @config.client.command()
-async def ModuleCheckState(ctx, name):
-    if name in config.activeModules:
+async def ModuleCheckState(ctx):
+    if len(config.openModule) == 0:
+        await ctx.channel.send(embed=utility.getEmbed("There is no open module"))
+        return
+    if config.openModule[-1].active == 1:
         await ctx.channel.send(embed=utility.getEmbed("Active"))
     else:
         await ctx.channel.send(embed=utility.getEmbed("Not Active"))
 
 @config.client.command()
 async def OpenModule(ctx, name):
-    if(config.openModule != 0):
-        await ctx.channel.send(embed=utility.getEmbed("**Error:** A module is already opened"))
-        return
-    for x in config.modules:
-        if x.getName() == name:
-
-            config.openModule = x
+    if len(config.openModule) != 0:
+        list = filterActions(config.openModule[-1].actions)
+    else:
+        list = getModules(3)
+    for x in list:
+        if not isinstance(x, Module.Module):
+            continue
+        if x.name == name:
+            config.openModule.append(x)
             await ctx.channel.send(embed=utility.getEmbed("Module **" + name + "** opened"))
             return
-    await ctx.channel.send(embed=utility.getEmbed("**Error:** That module doesn't exist"))
+    if len(config.openModule) != 0:
+        await ctx.channel.send(embed=utility.getEmbed("**Error:** That module doesn't exist in module **" + config.openModule[-1].name + "**"))
+    else:
+        await ctx.channel.send(embed=utility.getEmbed("**Error:** That module doesn't exist"))
     
 @config.client.command()
 async def CloseModule(ctx):
-    if(config.openModule == 0):
+    if len(config.openModule) == 0:
         await ctx.channel.send(embed=utility.getEmbed("**Error:** No module opened"))
         return
-    for x in config.modules:
-        if config.openModule.getName() == x.getName():
-            config.modules.remove(x)
-    config.modules.append(config.openModule)
-    config.openModule = 0
+    aux = config.openModule.pop()
+    if len(config.openModule) == 0:
+        if utility.getModType(aux.mode) == utility.getModType("0"):
+            for x in config.messageMod.actions:
+                if aux.getName() == x.getName():
+                    config.messageMod.actions.remove(x)
+                    break
+            config.messageMod.actions.append(aux)
+        elif utility.getModType(aux.mode) == utility.getModType("1"):
+            for x in config.scheduleMod.actions:
+                if aux.getName() == x.getName():
+                    config.scheduleMod.actions.remove(x)
+                    break
+            config.scheduleMod.actions.append(aux)
+        elif utility.getModType(aux.mode) == utility.getModType("2"):
+            for x in config.joinMod.actions:
+                if aux.getName() == x.getName():
+                    config.joinMod.actions.remove(x)
+                    break
+            config.joinMod.actions.append(aux)
+        else:
+            print("Invalid type wtf this should not happen O.o\n")
+            return
+        updateData(aux.mode)
+    else:
+        for x in filterActions(config.openModule[-1].actions):
+            if aux.getName() == x.getName():
+                config.openModule[-1].actions.remove(x)
+                break
+        config.openModule[-1].actions.append(aux)
     await ctx.channel.send(embed=utility.getEmbed("Module Closed"))
     return
 
 @config.client.command()
 async def ShowOpenModule(ctx):
-    if config.openModule == 0:
+    if len(config.openModule) == 0:
         string = utility.getEmbed("No module is open")
     else:
-        string = utility.getEmbed("The module **" + config.openModule.getName() + "** is opened")
+        string = utility.getEmbed("The module **" + config.openModule[-1].getName() + "** is opened")
     await ctx.channel.send(embed=string)
+
+@config.client.command()
+async def DeleteModule(ctx):
+    if len(config.openModule) == 0:
+        await ctx.channel.send(embed=utility.getEmbed("No module is open"))
+        return
+    aux = config.openModule.pop()
+    for x in config.openModule[-1].actions:
+        if x.name == aux.name:
+            config.openModule[-1].actions.remove(x)
+    await ctx.channel.send(embed=utility.getEmbed("Deleted the module **"+ aux.name + "**"))
+    
+    
+@config.client.command()
+async def DisplayModule(ctx):
+    if len(config.openModule) == 0:
+        await ctx.channel.send(embed=utility.getEmbed("There is no open module, use .OpenModule [.om] to open a module"))
+        return
+    await ctx.channel.send(config.openModule[-1].print(0))
+
+@config.client.command()
+async def SaveBackup(ctx):
+    config.backup = config.openModule.copy()
+    await ctx.channel.send(embed=utility.getEmbed("Backup saved, use .LoadBackup [.lb] to load it"))
+
+@config.client.command()
+async def LoadBackup(ctx):
+    if config.backup == 0:
+        await ctx.channel.send(embed=utility.getEmbed("There is no backup saved, use .SaveBackup [.sb] to save the current open Modules"))
+        return
+    config.openModule = config.backup.copy()
+    await ctx.channel.send(embed=utility.getEmbed("Backup loaded"))
+
+@config.client.command()
+async def DisplayBackup(ctx):
+    string = ""
+    for x in config.backup:
+        string += x.print(0) + "\n---------------------------\n"
+    await ctx.channel.send(string)
+
+@config.client.command()
+async def CancelEdit(ctx):
+    config.openModule.clear()
+    await ctx.channel.send(embed=utility.getEmbed("Closed modules without saving"))
 
 #--------------------#
 #   Alias Commands   #
 #--------------------#
 
 @config.client.command()
-async def ma(ctx, name):
-    await ModuleActivate(ctx, name)
-
-@config.client.command()
-async def md(ctx, name):
-    await ModuleDeactivate(ctx, name)
+async def am(ctx, name):
+    await setActiveModule(ctx, name)
 
 @config.client.command()
 async def lm(ctx):
@@ -194,3 +250,27 @@ async def cm(ctx):
 @config.client.command()
 async def som(ctx):
     await ShowOpenModule(ctx)
+
+@config.client.command()
+async def delm(ctx):
+    await DeleteModule(ctx)
+
+@config.client.command()
+async def dpm(ctx):
+    await DisplayModule(ctx)
+
+@config.client.command()
+async def sb(ctx):
+    await SaveBackup(ctx)
+
+@config.client.command()
+async def lb(ctx):
+    await LoadBackup(ctx)
+
+@config.client.command()
+async def dpb(ctx):
+    await DisplayBackup(ctx)
+
+@config.client.command()
+async def ce(ctx):
+    await CancelEdit(ctx)
