@@ -2,6 +2,10 @@
 import os
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
+
+load_dotenv()
+token = os.getenv('DISCORD_TOKEN')
 
 import config
 import utility
@@ -49,4 +53,4 @@ async def on_message(message):
     if config.mainteinance == 0:
         config.messageMod.execute(message)
 
-config.client.run(config.token)
+config.client.run(token)
