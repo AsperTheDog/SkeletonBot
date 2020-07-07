@@ -13,13 +13,12 @@ class Module:
         self.actions = []
         self.variables = []
 
-
     def addTrigger(self, trigger):
         self.triggers.append(trigger)
 
     def removeTrigger(self, trigger):
         self.triggers.remove(trigger)
-        
+
     def addAction(self, action):
         self.actions.append(action)
 
@@ -30,25 +29,26 @@ class Module:
         return self.mode
     
     def checkTriggers(self, message):
-        
         for x in self.triggers:
-            print(x.name)
             if x.checkState(message) == False:
                 return False
         return True
 
-    def execute(self, arg):
+    async def execute(self, arg):
         if self.active == 1:
-            if checkTriggers(arg) == True:
-                executeActions(arg)
+            if self.checkTriggers(arg) == True:
+                await self.executeActions(arg)
 
-    def executeActions(self, arg):
-        for x in actions:
-            x.execute(arg)
+    async def executeActions(self, arg):
+        for x in self.actions:
+            await x.execute(arg)
     
     def print(self, level):
         string = ""
-        string += "Module '**" + self.name + "**' of type '**" + utility.getModType(str(self.mode)) + "**'\n"
+        string += "Module '**" + self.name + "**' of type '**" + utility.getModType(str(self.mode)) + "** "
+        if self.active == 1:
+            string += "(active)"
+        string += "\n"
         for ts in range(level):
             string += "|\t\t"
         string += "**Triggers**\n"
@@ -62,7 +62,7 @@ class Module:
                 for ts in range(level):
                     string += "|\t\t"
                 string += "\t\t"
-                string += str(x) + "\n"
+                string += x.print() + "\n"
         for ts in range(level):
             string += "|\t\t"
         string += "**Actions**\n"
@@ -76,7 +76,7 @@ class Module:
                 for ts in range(level):
                     string += "|\t\t"
                 string += "\t\t"
-                string += x.print(level + 1) + "\n"
+                string += x.print() + "\n"
         for ts in range(level):
             string += "|\t\t"
         string += "**Stored variables**\n"

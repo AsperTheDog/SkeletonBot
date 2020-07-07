@@ -68,14 +68,17 @@ def filterActions(list):
 
 @config.client.command()
 async def setActiveModule(ctx, set):
+    if len(config.openModule) == 0:
+        await ctx.channel.send(embed=utility.getEmbed("There is no open module"))
+        return
     if set == "enable":
         activity = 1
-    else:
+    elif set == "disable":
         activity = 0
-    opm = config.openModule.pop()
-    opm.active = activity
-    config.openModule.append(opm)
-    response = utility.getEmbed("The module **" + opm.name + "** is now " + set + "d")
+    else:
+        set == abs(config.openModule[-1].active - 1)
+    config.openModule[-1].active = activity
+    response = utility.getEmbed("The module **" + config.openModule[-1].name + "** is now " + set + "d")
     await ctx.send(embed=response)
     
 @config.client.command()
@@ -185,6 +188,13 @@ async def DeleteModule(ctx):
         await ctx.channel.send(embed=utility.getEmbed("No module is open"))
         return
     aux = config.openModule.pop()
+    if len(config.openModule) == 0:
+        for x in getModules(aux.mode):
+            if x.name == aux.name:
+                getModules(aux.mode).remove(x)
+                await ctx.channel.send(embed=utility.getEmbed("Deleted the module **" + aux.name + "**"))
+                updateData(aux.mode)
+                return
     for x in config.openModule[-1].actions:
         if x.name == aux.name:
             config.openModule[-1].actions.remove(x)
