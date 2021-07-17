@@ -1,0 +1,59 @@
+{
+  "name": "Module 3",
+  "type": 0,
+  "Guild": "818849848366465025",
+  "activated": true,
+  "variables": {
+    "msgContent": "",
+    "userId": 0,
+    "userName": "",
+    "channelId": 0,
+    "channelName": ""
+  },
+  "triggers": [],
+  "actions": [
+    {
+      "id": "AttrToVar",
+      "args": {
+        "var": "msgContent",
+        "attr": "msgContent"
+      }
+    },
+    {
+      "id": "AttrToVar",
+      "args": {
+        "var": "userId",
+        "attr": "userId"
+      }
+    },
+    {
+      "id": "AttrToVar",
+      "args": {
+        "var": "userName",
+        "attr": "userName"
+      }
+    },
+    {
+      "id": "AttrToVar",
+      "args": {
+        "var": "channelId",
+        "attr": "channelId"
+      }
+    },
+    {
+      "id": "AttrToVar",
+      "args": {
+        "var": "channelName",
+        "attr": "channelName"
+      }
+    },
+    {
+      "id": "SendMessage",
+      "args": {
+        "content": "**Message:** %var:msgContent%\n**User:** %var:userName% (%var:userId%)\n**Channel:** %var:channelName% (%var:channelId%)",
+        "channel": 823987005364764672,
+        "embed": "True"
+      }
+    }
+  ]
+}

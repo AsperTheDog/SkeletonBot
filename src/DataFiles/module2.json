@@ -1,0 +1,52 @@
+{
+  "name": "Module 2",
+  "type": 0,
+  "Guild": "818849848366465025",
+  "activated": true,
+  "variables": {
+    "count": 0,
+    "user": "",
+    "channel": ""
+  },
+  "triggers": [
+    {
+      "id": "MsgHasContent",
+      "args": {
+        "content": "count"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "ConstToVar",
+      "args": {
+        "var1": "count",
+        "varTo": "count",
+        "const": 1,
+        "comp": "+"
+      }
+    },
+    {
+      "id": "AttrToVar",
+      "args": {
+        "var": "user",
+        "attr": "userId"
+      }
+    },
+    {
+      "id": "AttrToVar",
+      "args": {
+        "var": "channel",
+        "attr": "channelId"
+      }
+    },
+    {
+      "id": "SendMessage",
+      "args": {
+        "content": "Congratulations <@%var:user%> you asked for a count in channel <#%var:channel%>, Value is %var:count%!!",
+        "channel": 0,
+        "embed": "True"
+      }
+    }
+  ]
+}

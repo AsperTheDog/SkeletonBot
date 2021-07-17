@@ -1,0 +1,54 @@
+{
+  "name": "Module 1",
+  "type": 0,
+  "Guild": "818849848366465025",
+  "activated": true,
+  "variables": {},
+  "triggers": [
+    {
+      "id": "IfAny",
+      "args": [
+        {
+          "id": "MsgHasContent",
+          "args": {
+            "content": "test"
+          }
+        },
+        {
+          "id": "MsgHasContent",
+          "args": {
+            "content": "hello"
+          }
+        },
+        {
+          "id": "MsgHasContent",
+          "args": {
+            "content": "goodbye"
+          }
+        },
+        {
+          "id": "MsgHasContent",
+          "args": {
+            "content": "later"
+          }
+        }
+      ]
+    },
+    {
+      "id": "UserHasNickname",
+      "args": {
+        "nick": "Assper"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "SendMessage",
+      "args": {
+        "content": "Test successful",
+        "channel": 0,
+        "embed": "False"
+      }
+    }
+  ]
+}
